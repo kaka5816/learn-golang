@@ -3,6 +3,8 @@ package web
 import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
+	"go-learn/webook/internal/domain"
+	"go-learn/webook/internal/service"
 	"net/http"
 )
 
@@ -12,16 +14,19 @@ const (
 	passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
 )
 
+// 账号登录信息
 type UserHandler struct {
 	emailRexExp    *regexp.Regexp
 	passwordRexExp *regexp.Regexp
+	svc            *service.UserService
 }
 
 // 预加载正则表达式
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{
 		emailRexExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordRexExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
+		svc:            svc,
 	}
 }
 
@@ -74,6 +79,14 @@ func (h *UserHandler) SignUp(ctx *gin.Context) {
 	}
 	if !isPassword {
 		ctx.String(http.StatusOK, "密码格式错误，必须包含字母，数字，特殊字符并不少于八位")
+		return
+	}
+	err = h.svc.SignUp(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
 	ctx.String(http.StatusOK, "hello,你在注册") //第一个参数为响应状态码，第二个参数为响应主体body
