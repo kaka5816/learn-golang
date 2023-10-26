@@ -2,11 +2,14 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"go-learn/webook/internal/repository"
 	"go-learn/webook/internal/repository/dao"
 	"go-learn/webook/internal/service"
 	"go-learn/webook/internal/web"
+	"go-learn/webook/internal/web/middleware"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"time"
@@ -50,5 +53,11 @@ func initWebServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+	login := &middleware.LoginMiddlewareBuilder{}
+	//存储数据的，也就是userid
+	//通过设置的 secret 字符串，来计算 hash 值并放在 cookie 中
+	store := cookie.NewStore([]byte("secret"))
+	//cookie的名字叫做ssid, login.CheckLogin()登陆校验
+	server.Use(sessions.Sessions("ssid", store), login.CheckLogin())
 	return server
 }
